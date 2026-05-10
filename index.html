@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NAS Agent — Download</title>
+  <title>NAS Agent — AI File Management</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
       --bg: #0f1117;
+      --bg2: #12141e;
       --surface: #1a1d27;
       --surface2: #222534;
       --border: #2e3148;
@@ -24,6 +25,7 @@
       --win-hover: #60a5fa;
       --win-glow: rgba(59,130,246,0.22);
       --h1-gradient: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+      --nav-bg: rgba(15,17,23,0.85);
       --ctrl-bg: rgba(26,29,39,0.9);
       --ctrl-border: #2e3148;
       --ctrl-text: #8b8fa8;
@@ -33,6 +35,7 @@
 
     [data-theme="light"] {
       --bg: #f4f6ff;
+      --bg2: #eaecf8;
       --surface: #ffffff;
       --surface2: #eef0fa;
       --border: #d0d4ee;
@@ -45,6 +48,7 @@
       --win-hover: #1d4ed8;
       --win-glow: rgba(37,99,235,0.20);
       --h1-gradient: linear-gradient(135deg, #1a1d2e 0%, #6366f1 100%);
+      --nav-bg: rgba(244,246,255,0.88);
       --ctrl-bg: rgba(255,255,255,0.9);
       --ctrl-border: #d0d4ee;
       --ctrl-text: #565976;
@@ -52,38 +56,82 @@
       --ctrl-active-text: #1a1d2e;
     }
 
+    html { scroll-behavior: smooth; }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 60px 20px 80px;
       transition: background 0.25s, color 0.25s;
+      overflow-x: hidden;
     }
 
-    body::before {
-      content: '';
+    /* ── Navbar ── */
+    nav {
       position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99,102,241,0.12), transparent),
-        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(59,130,246,0.08), transparent);
-      pointer-events: none;
-      z-index: 0;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+      background: var(--nav-bg);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      transition: background 0.25s, border-color 0.25s;
     }
 
-    /* Top controls */
-    .top-controls {
-      position: fixed;
-      top: 16px;
-      right: 20px;
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 60px;
       display: flex;
       align-items: center;
       gap: 8px;
-      z-index: 100;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+      flex-shrink: 0;
+      margin-right: 16px;
+    }
+
+    .nav-logo img { width: 28px; height: 28px; object-fit: contain; }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      flex: 1;
+    }
+
+    .nav-link {
+      padding: 6px 12px;
+      border-radius: 7px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s, background 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-link:hover { color: var(--text); background: var(--surface2); }
+    .nav-link.active { color: var(--text); background: var(--surface2); }
+    .nav-link svg { width: 15px; height: 15px; }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
     }
 
     .ctrl-group {
@@ -97,8 +145,8 @@
     }
 
     .ctrl-btn {
-      padding: 6px 11px;
-      font-size: 0.78rem;
+      padding: 5px 10px;
+      font-size: 0.75rem;
       font-weight: 500;
       cursor: pointer;
       border: none;
@@ -108,140 +156,224 @@
       line-height: 1.4;
     }
 
-    .ctrl-btn.active {
-      background: var(--ctrl-active-bg);
-      color: var(--ctrl-active-text);
-      font-weight: 600;
-    }
-
+    .ctrl-btn.active { background: var(--ctrl-active-bg); color: var(--ctrl-active-text); font-weight: 600; }
     .ctrl-btn:hover:not(.active) { color: var(--text); }
-
-    .ctrl-sep {
-      width: 1px;
-      height: 18px;
-      background: var(--ctrl-border);
-      flex-shrink: 0;
-    }
+    .ctrl-sep { width: 1px; height: 16px; background: var(--ctrl-border); flex-shrink: 0; }
 
     .theme-btn {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 34px;
-      height: 34px;
+      width: 32px;
+      height: 32px;
       cursor: pointer;
       border: 1px solid var(--ctrl-border);
       border-radius: 8px;
       background: var(--ctrl-bg);
       color: var(--ctrl-text);
       backdrop-filter: blur(8px);
-      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      transition: background 0.15s, color 0.15s;
     }
 
     .theme-btn:hover { color: var(--text); }
-    .theme-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .theme-btn svg { width: 15px; height: 15px; }
 
-    .container {
-      position: relative;
-      z-index: 1;
-      max-width: 860px;
-      width: 100%;
-    }
-
-    /* Header */
-    .header {
-      text-align: center;
-      margin-bottom: 56px;
-    }
-
-    .logo-wrap {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 80px;
-      height: 80px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      margin-bottom: 24px;
-      box-shadow: 0 0 0 1px var(--border), 0 8px 32px rgba(0,0,0,0.4);
-      transition: background 0.25s, border-color 0.25s;
-    }
-
-    .logo-wrap img { width: 52px; height: 52px; object-fit: contain; }
-
-    .logo-fallback {
-      color: var(--accent);
+    /* ── Hero ── */
+    #home {
+      min-height: 100vh;
       display: flex;
       align-items: center;
-      justify-content: center;
+      padding: 100px 24px 60px;
+      position: relative;
+      overflow: hidden;
     }
 
-    h1 {
-      font-size: 2.5rem;
-      font-weight: 700;
-      letter-spacing: -0.03em;
+    #home::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 60% at 15% 50%, rgba(99,102,241,0.10), transparent),
+        radial-gradient(ellipse 50% 40% at 85% 70%, rgba(59,130,246,0.07), transparent);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 22px;
+    }
+
+    .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+    h1.hero-title {
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
       background: var(--h1-gradient);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      margin-bottom: 12px;
+      margin-bottom: 20px;
     }
 
-    .subtitle {
-      color: var(--muted);
+    .hero-sub {
       font-size: 1.05rem;
-      line-height: 1.6;
-      max-width: 480px;
-      margin: 0 auto;
+      color: var(--muted);
+      line-height: 1.75;
+      margin-bottom: 36px;
     }
 
-    /* Terminal install block */
-    .term-block {
-      background: #0a0b0f;
-      border: 1px solid #1e2035;
-      border-radius: 10px;
-      padding: 11px 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    .hero-ctas { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 
-    .term-block .prompt { color: #6366f1; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.8rem; user-select: none; flex-shrink: 0; }
-    .term-block code { flex: 1; color: #c9d1e8; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.76rem; word-break: break-all; line-height: 1.5; }
-
-    .copy-btn {
-      display: flex;
+    .btn-primary {
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      width: 28px;
-      height: 28px;
-      flex-shrink: 0;
-      background: transparent;
-      border: 1px solid #2e3148;
-      border-radius: 6px;
+      gap: 8px;
+      padding: 13px 24px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: none;
       cursor: pointer;
-      color: #8b8fa8;
+      transition: background 0.18s, box-shadow 0.18s, transform 0.12s;
+    }
+
+    .btn-primary:hover { background: var(--accent-hover); box-shadow: 0 0 28px var(--accent-glow); }
+    .btn-primary:active { transform: scale(0.97); }
+    .btn-primary svg { width: 17px; height: 17px; }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 20px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
       transition: color 0.15s, border-color 0.15s, background 0.15s;
     }
 
-    .copy-btn:hover { color: #c9d1e8; border-color: #6366f1; background: rgba(99,102,241,0.1); }
-    .copy-btn svg { width: 13px; height: 13px; }
+    .btn-ghost:hover { color: var(--text); border-color: var(--muted); background: var(--surface); }
+    .btn-ghost svg { width: 16px; height: 16px; }
 
-    .or-divider { font-size: 0.75rem; color: var(--muted); text-align: center; }
+    .hero-img-wrap { position: relative; }
 
-    /* Download cards */
+    .hero-img-wrap img {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: 0 32px 80px rgba(0,0,0,0.45), 0 0 0 1px var(--border);
+      display: block;
+    }
+
+    .hero-glow {
+      position: absolute;
+      inset: -30px;
+      background: radial-gradient(ellipse 80% 70% at 50% 50%, rgba(99,102,241,0.14), transparent);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* ── Shared section ── */
+    section { padding: 88px 24px; }
+
+    .section-inner { max-width: 1100px; margin: 0 auto; }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+    }
+
+    .section-sub {
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.75;
+      max-width: 520px;
+    }
+
+    .section-head { margin-bottom: 52px; }
+
+    /* ── Features ── */
+    #features { background: var(--bg2); }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .feat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    }
+
+    .feat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.2); border-color: var(--accent); }
+
+    .feat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(99,102,241,0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      color: var(--accent);
+    }
+
+    .feat-icon svg { width: 22px; height: 22px; }
+    .feat-title { font-size: 0.975rem; font-weight: 700; margin-bottom: 8px; }
+    .feat-desc { font-size: 0.86rem; color: var(--muted); line-height: 1.7; }
+
+    /* ── Download ── */
+    #download { }
+
     .cards {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 20px;
-    }
-
-    @media (max-width: 600px) {
-      .cards { grid-template-columns: 1fr; }
-      h1 { font-size: 1.8rem; }
-      .top-controls { gap: 6px; }
-      .ctrl-btn { padding: 5px 9px; font-size: 0.72rem; }
+      margin-bottom: 36px;
     }
 
     .card {
@@ -256,40 +388,23 @@
     }
 
     .card:hover { transform: translateY(-3px); }
-
     .card.linux { border-top: 2px solid var(--linux); }
-    .card.linux:hover {
-      border-color: var(--linux);
-      box-shadow: 0 0 32px var(--linux-glow), 0 8px 24px rgba(0,0,0,0.3);
-    }
-
+    .card.linux:hover { border-color: var(--linux); box-shadow: 0 0 32px var(--linux-glow), 0 8px 24px rgba(0,0,0,0.3); }
     .card.windows { border-top: 2px solid var(--win); }
-    .card.windows:hover {
-      border-color: var(--win);
-      box-shadow: 0 0 32px var(--win-glow), 0 8px 24px rgba(0,0,0,0.3);
-    }
+    .card.windows:hover { border-color: var(--win); box-shadow: 0 0 32px var(--win-glow), 0 8px 24px rgba(0,0,0,0.3); }
 
     .card-icon { display: flex; align-items: center; }
     .card-icon svg { width: 40px; height: 40px; }
     .card.linux .card-icon { color: var(--linux); }
     .card.windows .card-icon { color: var(--win); }
 
-    .card-title {
-      font-size: 1.3rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
-
-    .card-desc {
-      color: var(--muted);
-      font-size: 0.88rem;
-      line-height: 1.6;
-    }
+    .card-title { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; }
+    .card-desc { color: var(--muted); font-size: 0.875rem; line-height: 1.65; }
 
     .badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
 
     .badge {
-      font-size: 0.75rem;
+      font-size: 0.73rem;
       padding: 3px 10px;
       border-radius: 999px;
       border: 1px solid var(--border);
@@ -316,43 +431,58 @@
 
     .btn:active { transform: scale(0.97); }
     .btn svg { width: 18px; height: 18px; flex-shrink: 0; }
-
     .btn-linux { background: var(--linux); color: #fff; }
     .btn-linux:hover { background: var(--linux-hover); box-shadow: 0 0 20px var(--linux-glow); }
-
     .btn-windows { background: var(--win); color: #fff; }
     .btn-windows:hover { background: var(--win-hover); box-shadow: 0 0 20px var(--win-glow); }
 
-    /* Divider */
+    .term-block {
+      background: #0a0b0f;
+      border: 1px solid #1e2035;
+      border-radius: 10px;
+      padding: 11px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .term-block .prompt { color: #6366f1; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.8rem; user-select: none; flex-shrink: 0; }
+    .term-block code { flex: 1; color: #c9d1e8; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.75rem; word-break: break-all; line-height: 1.5; }
+
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+      background: transparent;
+      border: 1px solid #2e3148;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #8b8fa8;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+
+    .copy-btn:hover { color: #c9d1e8; border-color: #6366f1; background: rgba(99,102,241,0.1); }
+    .copy-btn svg { width: 13px; height: 13px; }
+
+    .or-divider { font-size: 0.75rem; color: var(--muted); text-align: center; }
+
     .divider {
       display: flex;
       align-items: center;
       gap: 16px;
-      margin: 52px 0 32px;
+      margin: 36px 0;
       color: var(--muted);
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
 
-    .divider::before, .divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-    /* Info strip */
-    .info-strip {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      text-align: center;
-    }
-
-    @media (max-width: 600px) {
-      .info-strip { grid-template-columns: 1fr; }
-    }
+    .info-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align: center; }
 
     .info-item {
       background: var(--surface);
@@ -362,231 +492,597 @@
       transition: background 0.25s, border-color 0.25s;
     }
 
-    .info-item .icon {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 8px;
-      color: var(--accent);
-    }
-
+    .info-item .icon { display: flex; align-items: center; justify-content: center; margin-bottom: 8px; color: var(--accent); }
     .info-item .icon svg { width: 22px; height: 22px; }
     .info-item .label { font-size: 0.8rem; color: var(--muted); }
     .info-item .value { font-size: 0.95rem; font-weight: 600; margin-top: 2px; }
 
-    footer {
-      margin-top: 60px;
-      color: var(--muted);
-      font-size: 0.82rem;
+    /* ── About ── */
+    #about { background: var(--bg2); }
+
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: start;
+    }
+
+    .about-desc { font-size: 0.95rem; color: var(--muted); line-height: 1.85; margin-bottom: 28px; }
+
+    .institution-box {
+      padding: 18px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .inst-name { font-size: 0.9rem; font-weight: 700; }
+    .inst-detail { font-size: 0.8rem; color: var(--muted); }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 16px;
       text-align: center;
+    }
+
+    .stat-value { font-size: 1.7rem; font-weight: 800; color: var(--accent); letter-spacing: -0.03em; }
+    .stat-unit { font-size: 1rem; font-weight: 500; color: var(--muted); }
+    .stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+
+    .stack-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+    .stack-pill {
+      padding: 4px 12px;
+      border-radius: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--muted);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    /* ── Footer ── */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 36px 24px;
+    }
+
+    .footer-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .footer-logo img { width: 22px; height: 22px; object-fit: contain; }
+    .footer-text { font-size: 0.82rem; color: var(--muted); }
+
+    .footer-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .footer-link:hover { color: var(--text); }
+    .footer-link svg { width: 15px; height: 15px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .features-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      .hero-inner { grid-template-columns: 1fr; gap: 44px; }
+      .hero-img-wrap { order: -1; }
+      h1.hero-title { font-size: 2.1rem; }
+      .hero-sub { font-size: 0.97rem; }
+      .cards { grid-template-columns: 1fr; }
+      .info-strip { grid-template-columns: 1fr; }
+      .about-grid { grid-template-columns: 1fr; gap: 40px; }
+      .nav-links .nav-link:not(.github) { display: none; }
+      .footer-inner { flex-direction: column; text-align: center; }
+    }
+
+    @media (max-width: 540px) {
+      .features-grid { grid-template-columns: 1fr; }
+      h1.hero-title { font-size: 1.75rem; }
+      .stats-grid { grid-template-columns: 1fr; }
+      section { padding: 64px 20px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Controls -->
-  <div class="top-controls">
-    <div class="ctrl-group">
-      <button class="ctrl-btn" id="btn-en" onclick="setLang('en')">EN</button>
-      <div class="ctrl-sep"></div>
-      <button class="ctrl-btn" id="btn-th" onclick="setLang('th')">TH</button>
-    </div>
-    <button class="theme-btn" id="btn-theme" onclick="toggleTheme()" title="Toggle theme">
-      <!-- moon (shown in dark mode, click to go light) -->
-      <svg id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-      </svg>
-      <!-- sun (shown in light mode, click to go dark) -->
-      <svg id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
-        <circle cx="12" cy="12" r="5"/>
-        <line x1="12" y1="1" x2="12" y2="3"/>
-        <line x1="12" y1="21" x2="12" y2="23"/>
-        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-        <line x1="1" y1="12" x2="3" y2="12"/>
-        <line x1="21" y1="12" x2="23" y2="12"/>
-        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-      </svg>
-    </button>
-  </div>
+  <!-- ── Navbar ── -->
+  <nav>
+    <div class="nav-inner">
+      <a href="#home" class="nav-logo">
+        <img src="assets/logo.png" alt="NAS Agent logo"/>
+        NAS Agent
+      </a>
 
-  <div class="container">
-
-    <header class="header">
-      <div class="logo-wrap">
-        <img
-          src="desktop-app-user/static/logo.png"
-          alt="NAS Agent logo"
-          onerror="this.style.display='none';document.getElementById('logo-fb').style.display='flex';"
-        />
-        <span id="logo-fb" class="logo-fallback" style="display:none">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="44" height="44">
-            <rect x="2" y="2" width="20" height="8" rx="2"/>
-            <rect x="2" y="14" width="20" height="8" rx="2"/>
-            <line x1="6" y1="6" x2="6.01" y2="6" stroke-width="2.5"/>
-            <line x1="6" y1="18" x2="6.01" y2="18" stroke-width="2.5"/>
+      <div class="nav-links">
+        <a href="#home" class="nav-link" id="nav-home">Home</a>
+        <a href="#download" class="nav-link" id="nav-download">Download</a>
+        <a href="#about" class="nav-link" id="nav-about">About</a>
+        <a href="https://github.com/nas-agent" class="nav-link github" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
           </svg>
-        </span>
+          GitHub
+        </a>
       </div>
-      <h1>NAS Agent</h1>
-      <p class="subtitle" id="subtitle">
-        Intelligent NAS management with AI-powered search and monitoring.
-        Choose your platform below to get started.
-      </p>
-    </header>
 
-    <div class="cards">
-
-      <!-- Linux -->
-      <div class="card linux">
-        <div class="card-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="3" width="20" height="14" rx="2"/>
-            <path d="M8 21h8M12 17v4"/>
-            <polyline points="6 8 9 11 6 14"/>
-            <line x1="12" y1="14" x2="16" y2="14"/>
+      <div class="nav-controls">
+        <div class="ctrl-group">
+          <button class="ctrl-btn" id="btn-en" onclick="setLang('en')">EN</button>
+          <div class="ctrl-sep"></div>
+          <button class="ctrl-btn" id="btn-th" onclick="setLang('th')">TH</button>
+        </div>
+        <button class="theme-btn" id="btn-theme" onclick="toggleTheme()" title="Toggle theme">
+          <svg id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
+          <svg id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Hero ── -->
+  <section id="home">
+    <div class="hero-inner">
+      <div>
+        <div class="hero-badge">
+          <span class="hero-badge-dot"></span>
+          <span id="hero-badge">Senior Project · KMUTT 2025</span>
         </div>
-        <div>
-          <div class="card-title" id="linux-title">Linux Agent</div>
-          <p class="card-desc" id="linux-desc">
-            Server-side agent for your NAS device. Enables AI scanning,
-            file indexing, and network discovery.
-          </p>
-        </div>
-        <div class="badge-row">
-          <span class="badge">.tar.gz</span>
-          <span class="badge">x86_64</span>
-          <span class="badge">arm64</span>
-        </div>
-        <div class="term-block">
-          <span class="prompt">$</span>
-          <code>curl -fsSL https://nas-agent.github.io/Landing-page/install.sh | sudo bash</code>
-          <button class="copy-btn" onclick="copyCmd(this)" title="Copy">
+        <h1 class="hero-title" id="hero-title">AI-Powered File Management<br>for Your NAS</h1>
+        <p class="hero-sub" id="hero-sub">Automatically organize, tag, and search your files on a private NAS using local AI — no cloud, no compromise on privacy.</p>
+        <div class="hero-ctas">
+          <a href="#download" class="btn-primary">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
-          </button>
+            <span id="hero-cta">Download Now</span>
+          </a>
+          <a href="https://github.com/nas-agent" class="btn-ghost" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+            </svg>
+            <span id="hero-github">View on GitHub</span>
+          </a>
         </div>
-        <p class="or-divider" id="linux-or">or</p>
-        <a class="btn btn-linux" href="https://github.com/nas-agent/Landing-page/releases/download/v0.0.1/nas-agent-installer.tar.gz" download>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          <span id="linux-btn">Download .tar.gz</span>
-        </a>
       </div>
 
-      <!-- Windows -->
-      <div class="card windows">
-        <div class="card-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7" rx="1"/>
-            <rect x="14" y="3" width="7" height="7" rx="1"/>
-            <rect x="3" y="14" width="7" height="7" rx="1"/>
-            <rect x="14" y="14" width="7" height="7" rx="1"/>
-          </svg>
+      <div class="hero-img-wrap">
+        <div class="hero-glow"></div>
+        <img src="assets/desktopapp.png" alt="NAS Agent Desktop App screenshot"
+             onerror="this.closest('.hero-img-wrap').style.display='none'"/>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features ── -->
+  <section id="features">
+    <div class="section-inner">
+      <div class="section-head">
+        <p class="section-label" id="feat-label">Features</p>
+        <h2 class="section-title" id="feat-title">Everything your NAS needs</h2>
+        <p class="section-sub" id="feat-sub">Built for private, local-first file management powered by AI that never leaves your network.</p>
+      </div>
+      <div class="features-grid">
+
+        <div class="feat-card">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+              <line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/>
+            </svg>
+          </div>
+          <div class="feat-title" id="f1-title">Smart Organization</div>
+          <p class="feat-desc" id="f1-desc">AI analyzes file content and automatically moves it to the right folder — no manual sorting needed.</p>
         </div>
+
+        <div class="feat-card">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <path d="M8 11a3 3 0 0 1 6 0"/>
+            </svg>
+          </div>
+          <div class="feat-title" id="f2-title">Semantic Search</div>
+          <p class="feat-desc" id="f2-desc">Find any file with natural language — describe what you're looking for, not just the filename.</p>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+              <line x1="7" y1="7" x2="7.01" y2="7"/>
+            </svg>
+          </div>
+          <div class="feat-title" id="f3-title">Auto-tagging</div>
+          <p class="feat-desc" id="f3-desc">AI generates summaries, keywords, and metadata for every file automatically on upload.</p>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <div class="feat-title" id="f4-title">Privacy First</div>
+          <p class="feat-desc" id="f4-desc">All AI processing runs on your local LAN using on-device models. Your files never leave your network.</p>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <div class="feat-title" id="f5-title">Live Dashboard</div>
+          <p class="feat-desc" id="f5-desc">Monitor CPU, RAM, temperature, storage health, and connected users in real-time from any browser.</p>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div class="feat-title" id="f6-title">Human-in-the-loop</div>
+          <p class="feat-desc" id="f6-desc">Guide the AI with natural language hints. Review decisions, give feedback, and improve accuracy over time.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Download ── -->
+  <section id="download">
+    <div class="section-inner">
+      <div class="section-head">
+        <p class="section-label" id="dl-label">Download</p>
+        <h2 class="section-title" id="dl-title">Get NAS Agent</h2>
+        <p class="section-sub" id="dl-sub">Choose your platform to get started.</p>
+      </div>
+
+      <div class="cards">
+
+        <!-- Linux -->
+        <div class="card linux">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <path d="M8 21h8M12 17v4"/>
+              <polyline points="6 8 9 11 6 14"/>
+              <line x1="12" y1="14" x2="16" y2="14"/>
+            </svg>
+          </div>
+          <div>
+            <div class="card-title" id="linux-title">Linux Agent</div>
+            <p class="card-desc" id="linux-desc">Server-side agent for your NAS. Enables AI scanning, file indexing, Samba file sharing, and network discovery.</p>
+          </div>
+          <div class="badge-row">
+            <span class="badge">.tar.gz</span>
+            <span class="badge">x86_64</span>
+            <span class="badge">arm64</span>
+            <span class="badge">Raspberry Pi</span>
+          </div>
+          <div class="term-block">
+            <span class="prompt">$</span>
+            <code>curl -fsSL https://nas-agent.github.io/Landing-page/install.sh | sudo bash</code>
+            <button class="copy-btn" onclick="copyCmd(this)" title="Copy">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+            </button>
+          </div>
+          <p class="or-divider" id="linux-or">or</p>
+          <a class="btn btn-linux" href="https://github.com/nas-agent/Landing-page/releases/download/v0.0.1/nas-agent-installer.tar.gz" download>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span id="linux-btn">Download .tar.gz</span>
+          </a>
+        </div>
+
+        <!-- Windows -->
+        <div class="card windows">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+          </div>
+          <div>
+            <div class="card-title" id="win-title">Windows Desktop App</div>
+            <p class="card-desc" id="win-desc">Desktop client for Windows. Browse, search, and manage your NAS with an intuitive overlay interface.</p>
+          </div>
+          <div class="badge-row">
+            <span class="badge">.exe</span>
+            <span class="badge">Windows 10+</span>
+            <span class="badge">64-bit</span>
+            <span class="badge">Electron</span>
+          </div>
+          <a class="btn btn-windows" href="https://github.com/nas-agent/Landing-page/releases/download/v0.0.1/Desktop.Overlay.Setup.0.0.1.exe" download>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span id="win-btn">Download for Windows</span>
+          </a>
+        </div>
+
+      </div>
+
+      <div class="divider"><span id="divider-text">System Info</span></div>
+
+      <div class="info-strip">
+        <div class="info-item">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+          </div>
+          <div class="label" id="lbl-version">Version</div>
+          <div class="value">0.0.1</div>
+        </div>
+        <div class="info-item">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <div class="label" id="lbl-license">License</div>
+          <div class="value">Private</div>
+        </div>
+        <div class="info-item">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            </svg>
+          </div>
+          <div class="label" id="lbl-runtime">Runtime</div>
+          <div class="value">Electron 40</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── About ── -->
+  <section id="about">
+    <div class="section-inner">
+      <div class="section-head">
+        <p class="section-label" id="about-label">About</p>
+        <h2 class="section-title" id="about-title">About This Project</h2>
+        <p class="section-sub" id="about-sub">A senior project solving real file management pain with local AI on a Raspberry Pi NAS.</p>
+      </div>
+
+      <div class="about-grid">
         <div>
-          <div class="card-title" id="win-title">Windows Desktop App</div>
-          <p class="card-desc" id="win-desc">
-            Desktop client for Windows. Browse, search, and manage your NAS
-            with an intuitive overlay interface.
-          </p>
+          <p class="about-desc" id="about-desc">NAS Agent is an AI-powered file management system built on a Raspberry Pi 4. When you upload a file, AI automatically classifies it, generates tags, recommends a folder, and moves it — all within your local network. Find any file later with natural language search, without needing to remember exact filenames.</p>
+          <div class="institution-box">
+            <span class="inst-name" id="inst-name">King Mongkut's University of Technology Thonburi</span>
+            <span class="inst-detail" id="inst-dept">Department of Computer Engineering · 2025</span>
+            <span class="inst-detail" id="inst-advisor">Advisor: Assoc. Prof. Dr. Thumrongrat Amornraksa</span>
+          </div>
         </div>
-        <div class="badge-row">
-          <span class="badge">.exe</span>
-          <span class="badge">Windows 10+</span>
-          <span class="badge">64-bit</span>
-        </div>
-        <a class="btn btn-windows" href="https://github.com/nas-agent/Landing-page/releases/download/v0.0.1/Desktop.Overlay.Setup.0.0.1.exe" download>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          <span id="win-btn">Download for Windows</span>
-        </a>
-      </div>
 
-    </div>
-
-    <div class="divider"><span id="divider-text">System Info</span></div>
-
-    <div class="info-strip">
-      <div class="info-item">
-        <div class="icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-          </svg>
+        <div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value">76.7<span class="stat-unit">%</span></div>
+              <div class="stat-label" id="stat1">Document Classification Accuracy</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">77.3<span class="stat-unit">%</span></div>
+              <div class="stat-label" id="stat2">Image Classification Accuracy</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">+43<span class="stat-unit">%</span></div>
+              <div class="stat-label" id="stat3">Clustering Improvement with Guided Prompts</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">3.94<span class="stat-unit">/5</span></div>
+              <div class="stat-label" id="stat4">User Satisfaction Score</div>
+            </div>
+          </div>
+          <p class="section-label" id="stack-label">Tech Stack</p>
+          <div class="stack-pills">
+            <span class="stack-pill">Go / Fiber</span>
+            <span class="stack-pill">SvelteKit</span>
+            <span class="stack-pill">Python / FastAPI</span>
+            <span class="stack-pill">Llama 3.2</span>
+            <span class="stack-pill">PaliGemma</span>
+            <span class="stack-pill">FAISS</span>
+            <span class="stack-pill">SQLite</span>
+            <span class="stack-pill">Electron</span>
+            <span class="stack-pill">Samba</span>
+            <span class="stack-pill">Raspberry Pi 4</span>
+            <span class="stack-pill">Docker</span>
+          </div>
         </div>
-        <div class="label" id="lbl-version">Version</div>
-        <div class="value">0.0.1</div>
-      </div>
-      <div class="info-item">
-        <div class="icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-        </div>
-        <div class="label" id="lbl-license">License</div>
-        <div class="value">Private</div>
-      </div>
-      <div class="info-item">
-        <div class="icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-          </svg>
-        </div>
-        <div class="label" id="lbl-runtime">Runtime</div>
-        <div class="value">Electron 40</div>
       </div>
     </div>
+  </section>
 
-    <footer>
-      <span id="footer-text">&copy; 2026 NAS Agent &mdash; All rights reserved.</span>
-    </footer>
-
-  </div>
+  <!-- ── Footer ── -->
+  <footer>
+    <div class="footer-inner">
+      <a href="#home" class="footer-logo">
+        <img src="assets/logo.png" alt="NAS Agent logo"/>
+        NAS Agent
+      </a>
+      <p class="footer-text" id="footer-text">© 2025 NAS Agent — KMUTT Senior Project. All rights reserved.</p>
+      <a href="https://github.com/nas-agent" class="footer-link" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+        </svg>
+        GitHub
+      </a>
+    </div>
+  </footer>
 
   <script>
     const i18n = {
       en: {
-        subtitle: 'Intelligent NAS management with AI-powered search and monitoring. Choose your platform below to get started.',
-        linuxTitle: 'Linux Agent',
-        linuxDesc: 'Server-side agent for your NAS device. Enables AI scanning, file indexing, and network discovery.',
-        linuxOr: 'or',
-      linuxBtn: 'Download .tar.gz',
-        winTitle: 'Windows Desktop App',
-        winDesc: 'Desktop client for Windows. Browse, search, and manage your NAS with an intuitive overlay interface.',
-        winBtn: 'Download for Windows',
-        divider: 'System Info',
-        version: 'Version',
-        license: 'License',
-        runtime: 'Runtime',
-        footer: '© 2026 NAS Agent — All rights reserved.',
+        navHome:'Home', navDownload:'Download', navAbout:'About',
+        heroBadge:'Senior Project · KMUTT 2025',
+        heroTitle:'AI-Powered File Management<br>for Your NAS',
+        heroSub:'Automatically organize, tag, and search your files on a private NAS using local AI — no cloud, no compromise on privacy.',
+        heroCta:'Download Now', heroGithub:'View on GitHub',
+        featLabel:'Features', featTitle:'Everything your NAS needs',
+        featSub:'Built for private, local-first file management powered by AI that never leaves your network.',
+        f1Title:'Smart Organization', f1Desc:'AI analyzes file content and automatically moves it to the right folder — no manual sorting needed.',
+        f2Title:'Semantic Search', f2Desc:'Find any file with natural language — describe what you\'re looking for, not just the filename.',
+        f3Title:'Auto-tagging', f3Desc:'AI generates summaries, keywords, and metadata for every file automatically on upload.',
+        f4Title:'Privacy First', f4Desc:'All AI processing runs on your local LAN using on-device models. Your files never leave your network.',
+        f5Title:'Live Dashboard', f5Desc:'Monitor CPU, RAM, temperature, storage health, and connected users in real-time from any browser.',
+        f6Title:'Human-in-the-loop', f6Desc:'Guide the AI with natural language hints. Review decisions, give feedback, and improve accuracy over time.',
+        dlLabel:'Download', dlTitle:'Get NAS Agent', dlSub:'Choose your platform to get started.',
+        linuxTitle:'Linux Agent', linuxDesc:'Server-side agent for your NAS. Enables AI scanning, file indexing, Samba file sharing, and network discovery.',
+        linuxOr:'or', linuxBtn:'Download .tar.gz',
+        winTitle:'Windows Desktop App', winDesc:'Desktop client for Windows. Browse, search, and manage your NAS with an intuitive overlay interface.',
+        winBtn:'Download for Windows',
+        divider:'System Info', version:'Version', license:'License', runtime:'Runtime',
+        aboutLabel:'About', aboutTitle:'About This Project',
+        aboutSub:'A senior project solving real file management pain with local AI on a Raspberry Pi NAS.',
+        aboutDesc:'NAS Agent is an AI-powered file management system built on a Raspberry Pi 4. When you upload a file, AI automatically classifies it, generates tags, recommends a folder, and moves it — all within your local network. Find any file later with natural language search, without needing to remember exact filenames.',
+        instName:'King Mongkut\'s University of Technology Thonburi',
+        instDept:'Department of Computer Engineering · 2025',
+        instAdvisor:'Advisor: Assoc. Prof. Dr. Thumrongrat Amornraksa',
+        stat1:'Document Classification Accuracy', stat2:'Image Classification Accuracy',
+        stat3:'Clustering Improvement with Guided Prompts', stat4:'User Satisfaction Score',
+        stackLabel:'Tech Stack',
+        footer:'© 2025 NAS Agent — KMUTT Senior Project. All rights reserved.',
       },
       th: {
-        subtitle: 'ระบบจัดการ NAS อัจฉริยะด้วย AI  เลือกแพลตฟอร์มด้านล่างเพื่อเริ่มต้น',
-        linuxTitle: 'Linux Agent',
-        linuxDesc: 'Agent ฝั่งเซิร์ฟเวอร์สำหรับอุปกรณ์ NAS รองรับการสแกนด้วย AI การจัดไฟล์ และการค้นพบเครือข่าย',
-        linuxOr: 'หรือ',
-        linuxBtn: 'ดาวน์โหลด .tar.gz',
-        winTitle: 'แอปเดสก์ท็อป Windows',
-        winDesc: 'แอปพลิเคชันสำหรับ Windows เรียกดู ค้นหา และจัดการ NAS ผ่านอินเทอร์เฟซที่ใช้งานง่าย',
-        winBtn: 'ดาวน์โหลดสำหรับ Windows',
-        divider: 'ข้อมูลระบบ',
-        version: 'เวอร์ชัน',
-        license: 'สิทธิ์การใช้งาน',
-        runtime: 'รันไทม์',
-        footer: '© 2026 NAS Agent — สงวนลิขสิทธิ์',
+        navHome:'หน้าหลัก', navDownload:'ดาวน์โหลด', navAbout:'เกี่ยวกับ',
+        heroBadge:'โปรเจกต์ปิด · มจธ. 2568',
+        heroTitle:'ระบบจัดการไฟล์อัจฉริยะด้วย AI<br>สำหรับ NAS ของคุณ',
+        heroSub:'จัดระเบียบ แท็ก และค้นหาไฟล์บน NAS ส่วนตัวด้วย AI ในเครื่อง — ไม่ต้องพึ่งคลาวด์ ข้อมูลปลอดภัย 100%',
+        heroCta:'ดาวน์โหลดเลย', heroGithub:'ดูบน GitHub',
+        featLabel:'ฟีเจอร์', featTitle:'ทุกสิ่งที่ NAS ของคุณต้องการ',
+        featSub:'ออกแบบมาเพื่อการจัดการไฟล์แบบส่วนตัว Local-first ด้วย AI ที่ทำงานภายในเครือข่ายของคุณ',
+        f1Title:'จัดระเบียบอัตโนมัติ', f1Desc:'AI วิเคราะห์เนื้อหาไฟล์และย้ายไปยังโฟลเดอร์ที่เหมาะสมโดยอัตโนมัติ ไม่ต้องจัดเรียงเอง',
+        f2Title:'ค้นหาด้วยภาษาธรรมชาติ', f2Desc:'ค้นหาไฟล์โดยอธิบายสิ่งที่ต้องการ ไม่ต้องจำชื่อไฟล์ที่แน่ชัด',
+        f3Title:'แท็กอัตโนมัติ', f3Desc:'AI สร้างสรุป คีย์เวิร์ด และ metadata ให้กับทุกไฟล์ที่อัปโหลดโดยอัตโนมัติ',
+        f4Title:'ความเป็นส่วนตัวมาก่อน', f4Desc:'AI ทำงานบน LAN ของคุณด้วยโมเดลในเครื่อง ไฟล์ไม่เคยออกจากเครือข่ายของคุณ',
+        f5Title:'แดชบอร์ดแบบเรียลไทม์', f5Desc:'ติดตาม CPU, RAM, อุณหภูมิ, พื้นที่เก็บข้อมูล และผู้ใช้แบบเรียลไทม์จากเบราว์เซอร์ใดก็ได้',
+        f6Title:'Human-in-the-loop', f6Desc:'ควบคุม AI ด้วยคำใบ้ภาษาธรรมชาติ ตรวจสอบ แก้ไข และปรับปรุงความแม่นยำตามเวลา',
+        dlLabel:'ดาวน์โหลด', dlTitle:'ดาวน์โหลด NAS Agent', dlSub:'เลือกแพลตฟอร์มของคุณเพื่อเริ่มต้น',
+        linuxTitle:'Linux Agent', linuxDesc:'Agent ฝั่งเซิร์ฟเวอร์สำหรับ NAS รองรับการสแกน AI การจัดทำดัชนีไฟล์ Samba และการค้นพบเครือข่าย',
+        linuxOr:'หรือ', linuxBtn:'ดาวน์โหลด .tar.gz',
+        winTitle:'แอปเดสก์ท็อป Windows', winDesc:'แอปพลิเคชันสำหรับ Windows เรียกดู ค้นหา และจัดการ NAS ผ่านอินเทอร์เฟซที่ใช้งานง่าย',
+        winBtn:'ดาวน์โหลดสำหรับ Windows',
+        divider:'ข้อมูลระบบ', version:'เวอร์ชัน', license:'สิทธิ์การใช้งาน', runtime:'รันไทม์',
+        aboutLabel:'เกี่ยวกับ', aboutTitle:'เกี่ยวกับโปรเจกต์',
+        aboutSub:'โปรเจกต์ปิดที่แก้ปัญหาการจัดการไฟล์จริงด้วย AI ในเครื่องบน Raspberry Pi NAS',
+        aboutDesc:'NAS Agent คือระบบจัดการไฟล์ที่ขับเคลื่อนด้วย AI บน Raspberry Pi 4 เมื่ออัปโหลดไฟล์ AI จะจำแนกประเภท สร้างแท็ก แนะนำโฟลเดอร์ และย้ายไฟล์โดยอัตโนมัติ ทั้งหมดภายในเครือข่ายท้องถิ่น ค้นหาไฟล์ด้วยภาษาธรรมชาติโดยไม่ต้องจำชื่อไฟล์ที่แน่นอน',
+        instName:'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าธนบุรี',
+        instDept:'ภาควิชาวิศวกรรมคอมพิวเตอร์ · 2568',
+        instAdvisor:'อาจารย์ที่ปรึกษา: รศ.ดร.ธำรงรัตน์ อมรรักษา',
+        stat1:'ความแม่นยำการจำแนกเอกสาร', stat2:'ความแม่นยำการจำแนกรูปภาพ',
+        stat3:'การปรับปรุงการจัดกลุ่มด้วย Guided Prompts', stat4:'คะแนนความพึงพอใจผู้ใช้',
+        stackLabel:'เทคโนโลยีที่ใช้',
+        footer:'© 2568 NAS Agent — โปรเจกต์ปิด มจธ. สงวนลิขสิทธิ์',
       }
     };
+
+    const ids = [
+      ['nav-home','navHome'],['nav-download','navDownload'],['nav-about','navAbout'],
+      ['hero-badge','heroBadge'],['hero-title','heroTitle'],['hero-sub','heroSub'],
+      ['hero-cta','heroCta'],['hero-github','heroGithub'],
+      ['feat-label','featLabel'],['feat-title','featTitle'],['feat-sub','featSub'],
+      ['f1-title','f1Title'],['f1-desc','f1Desc'],['f2-title','f2Title'],['f2-desc','f2Desc'],
+      ['f3-title','f3Title'],['f3-desc','f3Desc'],['f4-title','f4Title'],['f4-desc','f4Desc'],
+      ['f5-title','f5Title'],['f5-desc','f5Desc'],['f6-title','f6Title'],['f6-desc','f6Desc'],
+      ['dl-label','dlLabel'],['dl-title','dlTitle'],['dl-sub','dlSub'],
+      ['linux-title','linuxTitle'],['linux-desc','linuxDesc'],['linux-or','linuxOr'],['linux-btn','linuxBtn'],
+      ['win-title','winTitle'],['win-desc','winDesc'],['win-btn','winBtn'],
+      ['divider-text','divider'],['lbl-version','version'],['lbl-license','license'],['lbl-runtime','runtime'],
+      ['about-label','aboutLabel'],['about-title','aboutTitle'],['about-sub','aboutSub'],['about-desc','aboutDesc'],
+      ['inst-name','instName'],['inst-dept','instDept'],['inst-advisor','instAdvisor'],
+      ['stat1','stat1'],['stat2','stat2'],['stat3','stat3'],['stat4','stat4'],
+      ['stack-label','stackLabel'],['footer-text','footer'],
+    ];
+
+    function setLang(lang) {
+      document.documentElement.lang = lang;
+      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+      document.getElementById('btn-th').classList.toggle('active', lang === 'th');
+      const t = i18n[lang];
+      ids.forEach(([id, key]) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = t[key];
+      });
+      localStorage.setItem('nas-lang', lang);
+    }
+
+    function setTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      document.getElementById('icon-moon').style.display = t === 'dark' ? '' : 'none';
+      document.getElementById('icon-sun').style.display = t === 'light' ? '' : 'none';
+      localStorage.setItem('nas-theme', t);
+    }
+
+    function toggleTheme() {
+      setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    }
 
     function copyCmd(btn) {
       const code = btn.closest('.term-block').querySelector('code').textContent;
@@ -598,44 +1094,26 @@
       });
     }
 
-    function setTheme(t) {
-      document.documentElement.setAttribute('data-theme', t);
-      document.getElementById('icon-moon').style.display = t === 'dark' ? '' : 'none';
-      document.getElementById('icon-sun').style.display = t === 'light' ? '' : 'none';
-      localStorage.setItem('nas-theme', t);
-    }
+    // Active nav highlight on scroll
+    const navMap = { home:'nav-home', features:null, download:'nav-download', about:'nav-about' };
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+          const nid = navMap[e.target.id];
+          if (nid) document.getElementById(nid)?.classList.add('active');
+        }
+      });
+    }, { threshold: 0.35 });
 
-    function toggleTheme() {
-      const current = document.documentElement.getAttribute('data-theme');
-      setTheme(current === 'dark' ? 'light' : 'dark');
-    }
-
-    function setLang(lang) {
-      document.documentElement.lang = lang;
-      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
-      document.getElementById('btn-th').classList.toggle('active', lang === 'th');
-      const t = i18n[lang];
-      document.getElementById('subtitle').textContent = t.subtitle;
-      document.getElementById('linux-title').textContent = t.linuxTitle;
-      document.getElementById('linux-desc').textContent = t.linuxDesc;
-      document.getElementById('linux-or').textContent = t.linuxOr;
-      document.getElementById('linux-btn').textContent = t.linuxBtn;
-      document.getElementById('win-title').textContent = t.winTitle;
-      document.getElementById('win-desc').textContent = t.winDesc;
-      document.getElementById('win-btn').textContent = t.winBtn;
-      document.getElementById('divider-text').textContent = t.divider;
-      document.getElementById('lbl-version').textContent = t.version;
-      document.getElementById('lbl-license').textContent = t.license;
-      document.getElementById('lbl-runtime').textContent = t.runtime;
-      document.getElementById('footer-text').textContent = t.footer;
-      localStorage.setItem('nas-lang', lang);
-    }
+    ['home','features','download','about'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
 
     (function init() {
-      const theme = localStorage.getItem('nas-theme') || 'dark';
-      const lang = localStorage.getItem('nas-lang') || 'en';
-      setTheme(theme);
-      setLang(lang);
+      setTheme(localStorage.getItem('nas-theme') || 'dark');
+      setLang(localStorage.getItem('nas-lang') || 'en');
     })();
   </script>
 </body>
