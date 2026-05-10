@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NAS Agent — Download</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #222534;
+      --border: #2e3148;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --accent-glow: rgba(99,102,241,0.25);
+      --text: #f0f2ff;
+      --muted: #8b8fa8;
+      --linux: #f97316;
+      --linux-hover: #fb923c;
+      --linux-glow: rgba(249,115,22,0.22);
+      --win: #3b82f6;
+      --win-hover: #60a5fa;
+      --win-glow: rgba(59,130,246,0.22);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 20px 80px;
+    }
+
+    /* Background subtle gradient */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99,102,241,0.12), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(59,130,246,0.08), transparent);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      width: 100%;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    .logo-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 80px;
+      height: 80px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      margin-bottom: 24px;
+      box-shadow: 0 0 0 1px var(--border), 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .logo-wrap img {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+    }
+
+    .logo-fallback {
+      font-size: 36px;
+      line-height: 1;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.6;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* Download cards */
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .cards { grid-template-columns: 1fr; }
+      h1 { font-size: 1.8rem; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 28px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+    }
+
+    .card.linux {
+      border-top: 2px solid var(--linux);
+    }
+    .card.linux:hover {
+      border-color: var(--linux);
+      box-shadow: 0 0 32px var(--linux-glow), 0 8px 24px rgba(0,0,0,0.3);
+    }
+
+    .card.windows {
+      border-top: 2px solid var(--win);
+    }
+    .card.windows:hover {
+      border-color: var(--win);
+      box-shadow: 0 0 32px var(--win-glow), 0 8px 24px rgba(0,0,0,0.3);
+    }
+
+    .card-icon {
+      font-size: 2.4rem;
+      line-height: 1;
+    }
+
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .card-desc {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: var(--surface2);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 22px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.18s, box-shadow 0.18s, transform 0.12s;
+      margin-top: auto;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-linux {
+      background: var(--linux);
+      color: #fff;
+    }
+    .btn-linux:hover {
+      background: var(--linux-hover);
+      box-shadow: 0 0 20px var(--linux-glow);
+    }
+
+    .btn-windows {
+      background: var(--win);
+      color: #fff;
+    }
+    .btn-windows:hover {
+      background: var(--win-hover);
+      box-shadow: 0 0 20px var(--win-glow);
+    }
+
+    .btn svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 52px 0 32px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Info strip */
+    .info-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      .info-strip { grid-template-columns: 1fr; }
+    }
+
+    .info-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 16px;
+    }
+
+    .info-item .icon { font-size: 1.5rem; margin-bottom: 8px; }
+    .info-item .label { font-size: 0.8rem; color: var(--muted); }
+    .info-item .value { font-size: 0.95rem; font-weight: 600; margin-top: 2px; }
+
+    /* Footer */
+    footer {
+      margin-top: 60px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <header class="header">
+      <div class="logo-wrap">
+        <img
+          src="desktop-app-user/static/logo.png"
+          alt="NAS Agent logo"
+          onerror="this.parentElement.innerHTML='<span class=\'logo-fallback\'>🗄️</span>'"
+        />
+      </div>
+      <h1>NAS Agent</h1>
+      <p class="subtitle">
+        Intelligent NAS management with AI-powered search and monitoring.
+        Choose your platform below to get started.
+      </p>
+    </header>
+
+    <div class="cards">
+
+      <!-- Linux -->
+      <div class="card linux">
+        <div class="card-icon">🐧</div>
+        <div>
+          <div class="card-title">Linux Agent</div>
+          <p class="card-desc">
+            Server-side agent for your NAS device. Enables AI scanning,
+            file indexing, and network discovery.
+          </p>
+        </div>
+        <div class="badge-row">
+          <span class="badge">.tar.gz</span>
+          <span class="badge">x86_64</span>
+          <span class="badge">arm64</span>
+        </div>
+        <a class="btn btn-linux" href="nas-agent-installer.tar.gz" download>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Download for Linux
+        </a>
+      </div>
+
+      <!-- Windows -->
+      <div class="card windows">
+        <div class="card-icon">🪟</div>
+        <div>
+          <div class="card-title">Windows Desktop App</div>
+          <p class="card-desc">
+            Desktop client for Windows. Browse, search, and manage your NAS
+            with an intuitive overlay interface.
+          </p>
+        </div>
+        <div class="badge-row">
+          <span class="badge">.exe</span>
+          <span class="badge">Windows 10+</span>
+          <span class="badge">64-bit</span>
+        </div>
+        <a class="btn btn-windows" href="desktop-app-user/dist/Desktop Overlay Setup 0.0.1.exe" download>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Download for Windows
+        </a>
+      </div>
+
+    </div>
+
+    <div class="divider">System Info</div>
+
+    <div class="info-strip">
+      <div class="info-item">
+        <div class="icon">⚡</div>
+        <div class="label">Version</div>
+        <div class="value">0.0.1</div>
+      </div>
+      <div class="info-item">
+        <div class="icon">🔒</div>
+        <div class="label">License</div>
+        <div class="value">Private</div>
+      </div>
+      <div class="info-item">
+        <div class="icon">📦</div>
+        <div class="label">Runtime</div>
+        <div class="value">Electron 40</div>
+      </div>
+    </div>
+
+    <footer>
+      &copy; 2026 NAS Agent — All rights reserved.
+    </footer>
+
+  </div>
+</body>
+</html>
