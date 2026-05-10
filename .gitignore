@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build output (upload to GitHub Releases instead)
+desktop-app-user/dist/
+desktop-app-user/build/
+
+# Binary installers (upload to GitHub Releases instead)
+*.tar.gz
+*.exe
+*.dmg
+*.AppImage
+
+# Electron builder artifacts
+desktop-app-user/release/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db

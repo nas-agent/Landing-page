@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -23,6 +23,33 @@
       --win: #3b82f6;
       --win-hover: #60a5fa;
       --win-glow: rgba(59,130,246,0.22);
+      --h1-gradient: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+      --ctrl-bg: rgba(26,29,39,0.9);
+      --ctrl-border: #2e3148;
+      --ctrl-text: #8b8fa8;
+      --ctrl-active-bg: #2e3148;
+      --ctrl-active-text: #f0f2ff;
+    }
+
+    [data-theme="light"] {
+      --bg: #f4f6ff;
+      --surface: #ffffff;
+      --surface2: #eef0fa;
+      --border: #d0d4ee;
+      --text: #1a1d2e;
+      --muted: #565976;
+      --linux: #ea6c0f;
+      --linux-hover: #c85c0a;
+      --linux-glow: rgba(234,108,15,0.20);
+      --win: #2563eb;
+      --win-hover: #1d4ed8;
+      --win-glow: rgba(37,99,235,0.20);
+      --h1-gradient: linear-gradient(135deg, #1a1d2e 0%, #6366f1 100%);
+      --ctrl-bg: rgba(255,255,255,0.9);
+      --ctrl-border: #d0d4ee;
+      --ctrl-text: #565976;
+      --ctrl-active-bg: #eef0fa;
+      --ctrl-active-text: #1a1d2e;
     }
 
     body {
@@ -34,9 +61,9 @@
       flex-direction: column;
       align-items: center;
       padding: 60px 20px 80px;
+      transition: background 0.25s, color 0.25s;
     }
 
-    /* Background subtle gradient */
     body::before {
       content: '';
       position: fixed;
@@ -47,6 +74,72 @@
       pointer-events: none;
       z-index: 0;
     }
+
+    /* Top controls */
+    .top-controls {
+      position: fixed;
+      top: 16px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 100;
+    }
+
+    .ctrl-group {
+      display: flex;
+      align-items: center;
+      background: var(--ctrl-bg);
+      border: 1px solid var(--ctrl-border);
+      border-radius: 8px;
+      overflow: hidden;
+      backdrop-filter: blur(8px);
+    }
+
+    .ctrl-btn {
+      padding: 6px 11px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--ctrl-text);
+      transition: background 0.15s, color 0.15s;
+      line-height: 1.4;
+    }
+
+    .ctrl-btn.active {
+      background: var(--ctrl-active-bg);
+      color: var(--ctrl-active-text);
+      font-weight: 600;
+    }
+
+    .ctrl-btn:hover:not(.active) { color: var(--text); }
+
+    .ctrl-sep {
+      width: 1px;
+      height: 18px;
+      background: var(--ctrl-border);
+      flex-shrink: 0;
+    }
+
+    .theme-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      cursor: pointer;
+      border: 1px solid var(--ctrl-border);
+      border-radius: 8px;
+      background: var(--ctrl-bg);
+      color: var(--ctrl-text);
+      backdrop-filter: blur(8px);
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .theme-btn:hover { color: var(--text); }
+    .theme-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
 
     .container {
       position: relative;
@@ -72,24 +165,23 @@
       border-radius: 22px;
       margin-bottom: 24px;
       box-shadow: 0 0 0 1px var(--border), 0 8px 32px rgba(0,0,0,0.4);
+      transition: background 0.25s, border-color 0.25s;
     }
 
-    .logo-wrap img {
-      width: 52px;
-      height: 52px;
-      object-fit: contain;
-    }
+    .logo-wrap img { width: 52px; height: 52px; object-fit: contain; }
 
     .logo-fallback {
-      font-size: 36px;
-      line-height: 1;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     h1 {
       font-size: 2.5rem;
       font-weight: 700;
       letter-spacing: -0.03em;
-      background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+      background: var(--h1-gradient);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -114,6 +206,8 @@
     @media (max-width: 600px) {
       .cards { grid-template-columns: 1fr; }
       h1 { font-size: 1.8rem; }
+      .top-controls { gap: 6px; }
+      .ctrl-btn { padding: 5px 9px; font-size: 0.72rem; }
     }
 
     .card {
@@ -124,33 +218,27 @@
       display: flex;
       flex-direction: column;
       gap: 20px;
-      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s, background 0.25s;
     }
 
-    .card:hover {
-      transform: translateY(-3px);
-    }
+    .card:hover { transform: translateY(-3px); }
 
-    .card.linux {
-      border-top: 2px solid var(--linux);
-    }
+    .card.linux { border-top: 2px solid var(--linux); }
     .card.linux:hover {
       border-color: var(--linux);
       box-shadow: 0 0 32px var(--linux-glow), 0 8px 24px rgba(0,0,0,0.3);
     }
 
-    .card.windows {
-      border-top: 2px solid var(--win);
-    }
+    .card.windows { border-top: 2px solid var(--win); }
     .card.windows:hover {
       border-color: var(--win);
       box-shadow: 0 0 32px var(--win-glow), 0 8px 24px rgba(0,0,0,0.3);
     }
 
-    .card-icon {
-      font-size: 2.4rem;
-      line-height: 1;
-    }
+    .card-icon { display: flex; align-items: center; }
+    .card-icon svg { width: 40px; height: 40px; }
+    .card.linux .card-icon { color: var(--linux); }
+    .card.windows .card-icon { color: var(--win); }
 
     .card-title {
       font-size: 1.3rem;
@@ -164,11 +252,7 @@
       line-height: 1.6;
     }
 
-    .badge-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+    .badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
 
     .badge {
       font-size: 0.75rem;
@@ -197,30 +281,13 @@
     }
 
     .btn:active { transform: scale(0.97); }
+    .btn svg { width: 18px; height: 18px; flex-shrink: 0; }
 
-    .btn-linux {
-      background: var(--linux);
-      color: #fff;
-    }
-    .btn-linux:hover {
-      background: var(--linux-hover);
-      box-shadow: 0 0 20px var(--linux-glow);
-    }
+    .btn-linux { background: var(--linux); color: #fff; }
+    .btn-linux:hover { background: var(--linux-hover); box-shadow: 0 0 20px var(--linux-glow); }
 
-    .btn-windows {
-      background: var(--win);
-      color: #fff;
-    }
-    .btn-windows:hover {
-      background: var(--win-hover);
-      box-shadow: 0 0 20px var(--win-glow);
-    }
-
-    .btn svg {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-    }
+    .btn-windows { background: var(--win); color: #fff; }
+    .btn-windows:hover { background: var(--win-hover); box-shadow: 0 0 20px var(--win-glow); }
 
     /* Divider */
     .divider {
@@ -258,13 +325,21 @@
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 20px 16px;
+      transition: background 0.25s, border-color 0.25s;
     }
 
-    .info-item .icon { font-size: 1.5rem; margin-bottom: 8px; }
+    .info-item .icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+      color: var(--accent);
+    }
+
+    .info-item .icon svg { width: 22px; height: 22px; }
     .info-item .label { font-size: 0.8rem; color: var(--muted); }
     .info-item .value { font-size: 0.95rem; font-weight: 600; margin-top: 2px; }
 
-    /* Footer */
     footer {
       margin-top: 60px;
       color: var(--muted);
@@ -274,6 +349,34 @@
   </style>
 </head>
 <body>
+
+  <!-- Top Controls -->
+  <div class="top-controls">
+    <div class="ctrl-group">
+      <button class="ctrl-btn" id="btn-en" onclick="setLang('en')">EN</button>
+      <div class="ctrl-sep"></div>
+      <button class="ctrl-btn" id="btn-th" onclick="setLang('th')">TH</button>
+    </div>
+    <button class="theme-btn" id="btn-theme" onclick="toggleTheme()" title="Toggle theme">
+      <!-- moon (shown in dark mode, click to go light) -->
+      <svg id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+      <!-- sun (shown in light mode, click to go dark) -->
+      <svg id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/>
+        <line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/>
+        <line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+    </button>
+  </div>
+
   <div class="container">
 
     <header class="header">
@@ -281,11 +384,19 @@
         <img
           src="desktop-app-user/static/logo.png"
           alt="NAS Agent logo"
-          onerror="this.parentElement.innerHTML='<span class=\'logo-fallback\'>🗄️</span>'"
+          onerror="this.style.display='none';document.getElementById('logo-fb').style.display='flex';"
         />
+        <span id="logo-fb" class="logo-fallback" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="44" height="44">
+            <rect x="2" y="2" width="20" height="8" rx="2"/>
+            <rect x="2" y="14" width="20" height="8" rx="2"/>
+            <line x1="6" y1="6" x2="6.01" y2="6" stroke-width="2.5"/>
+            <line x1="6" y1="18" x2="6.01" y2="18" stroke-width="2.5"/>
+          </svg>
+        </span>
       </div>
       <h1>NAS Agent</h1>
-      <p class="subtitle">
+      <p class="subtitle" id="subtitle">
         Intelligent NAS management with AI-powered search and monitoring.
         Choose your platform below to get started.
       </p>
@@ -295,10 +406,17 @@
 
       <!-- Linux -->
       <div class="card linux">
-        <div class="card-icon">🐧</div>
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <path d="M8 21h8M12 17v4"/>
+            <polyline points="6 8 9 11 6 14"/>
+            <line x1="12" y1="14" x2="16" y2="14"/>
+          </svg>
+        </div>
         <div>
-          <div class="card-title">Linux Agent</div>
-          <p class="card-desc">
+          <div class="card-title" id="linux-title">Linux Agent</div>
+          <p class="card-desc" id="linux-desc">
             Server-side agent for your NAS device. Enables AI scanning,
             file indexing, and network discovery.
           </p>
@@ -314,16 +432,23 @@
             <polyline points="7 10 12 15 17 10"/>
             <line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
-          Download for Linux
+          <span id="linux-btn">Download for Linux</span>
         </a>
       </div>
 
       <!-- Windows -->
       <div class="card windows">
-        <div class="card-icon">🪟</div>
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+        </div>
         <div>
-          <div class="card-title">Windows Desktop App</div>
-          <p class="card-desc">
+          <div class="card-title" id="win-title">Windows Desktop App</div>
+          <p class="card-desc" id="win-desc">
             Desktop client for Windows. Browse, search, and manage your NAS
             with an intuitive overlay interface.
           </p>
@@ -339,36 +464,121 @@
             <polyline points="7 10 12 15 17 10"/>
             <line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
-          Download for Windows
+          <span id="win-btn">Download for Windows</span>
         </a>
       </div>
 
     </div>
 
-    <div class="divider">System Info</div>
+    <div class="divider"><span id="divider-text">System Info</span></div>
 
     <div class="info-strip">
       <div class="info-item">
-        <div class="icon">⚡</div>
-        <div class="label">Version</div>
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+        </div>
+        <div class="label" id="lbl-version">Version</div>
         <div class="value">0.0.1</div>
       </div>
       <div class="info-item">
-        <div class="icon">🔒</div>
-        <div class="label">License</div>
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <div class="label" id="lbl-license">License</div>
         <div class="value">Private</div>
       </div>
       <div class="info-item">
-        <div class="icon">📦</div>
-        <div class="label">Runtime</div>
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          </svg>
+        </div>
+        <div class="label" id="lbl-runtime">Runtime</div>
         <div class="value">Electron 40</div>
       </div>
     </div>
 
     <footer>
-      &copy; 2026 NAS Agent — All rights reserved.
+      <span id="footer-text">&copy; 2026 NAS Agent &mdash; All rights reserved.</span>
     </footer>
 
   </div>
+
+  <script>
+    const i18n = {
+      en: {
+        subtitle: 'Intelligent NAS management with AI-powered search and monitoring. Choose your platform below to get started.',
+        linuxTitle: 'Linux Agent',
+        linuxDesc: 'Server-side agent for your NAS device. Enables AI scanning, file indexing, and network discovery.',
+        linuxBtn: 'Download for Linux',
+        winTitle: 'Windows Desktop App',
+        winDesc: 'Desktop client for Windows. Browse, search, and manage your NAS with an intuitive overlay interface.',
+        winBtn: 'Download for Windows',
+        divider: 'System Info',
+        version: 'Version',
+        license: 'License',
+        runtime: 'Runtime',
+        footer: '© 2026 NAS Agent — All rights reserved.',
+      },
+      th: {
+        subtitle: 'ระบบจัดการ NAS อัจฉริยะด้วย AI  เลือกแพลตฟอร์มด้านล่างเพื่อเริ่มต้น',
+        linuxTitle: 'Linux Agent',
+        linuxDesc: 'Agent ฝั่งเซิร์ฟเวอร์สำหรับอุปกรณ์ NAS รองรับการสแกนด้วย AI การจัดไฟล์ และการค้นพบเครือข่าย',
+        linuxBtn: 'ดาวน์โหลดสำหรับ Linux',
+        winTitle: 'แอปเดสก์ท็อป Windows',
+        winDesc: 'แอปพลิเคชันสำหรับ Windows เรียกดู ค้นหา และจัดการ NAS ผ่านอินเทอร์เฟซที่ใช้งานง่าย',
+        winBtn: 'ดาวน์โหลดสำหรับ Windows',
+        divider: 'ข้อมูลระบบ',
+        version: 'เวอร์ชัน',
+        license: 'สิทธิ์การใช้งาน',
+        runtime: 'รันไทม์',
+        footer: '© 2026 NAS Agent — สงวนลิขสิทธิ์',
+      }
+    };
+
+    function setTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      document.getElementById('icon-moon').style.display = t === 'dark' ? '' : 'none';
+      document.getElementById('icon-sun').style.display = t === 'light' ? '' : 'none';
+      localStorage.setItem('nas-theme', t);
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      setTheme(current === 'dark' ? 'light' : 'dark');
+    }
+
+    function setLang(lang) {
+      document.documentElement.lang = lang;
+      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+      document.getElementById('btn-th').classList.toggle('active', lang === 'th');
+      const t = i18n[lang];
+      document.getElementById('subtitle').textContent = t.subtitle;
+      document.getElementById('linux-title').textContent = t.linuxTitle;
+      document.getElementById('linux-desc').textContent = t.linuxDesc;
+      document.getElementById('linux-btn').textContent = t.linuxBtn;
+      document.getElementById('win-title').textContent = t.winTitle;
+      document.getElementById('win-desc').textContent = t.winDesc;
+      document.getElementById('win-btn').textContent = t.winBtn;
+      document.getElementById('divider-text').textContent = t.divider;
+      document.getElementById('lbl-version').textContent = t.version;
+      document.getElementById('lbl-license').textContent = t.license;
+      document.getElementById('lbl-runtime').textContent = t.runtime;
+      document.getElementById('footer-text').textContent = t.footer;
+      localStorage.setItem('nas-lang', lang);
+    }
+
+    (function init() {
+      const theme = localStorage.getItem('nas-theme') || 'dark';
+      const lang = localStorage.getItem('nas-lang') || 'en';
+      setTheme(theme);
+      setLang(lang);
+    })();
+  </script>
 </body>
 </html>
