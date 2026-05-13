@@ -14,4 +14,9 @@ curl -fsSL "$RELEASE_URL" -o "$TMP_DIR/nas-agent-installer.tar.gz"
 echo "Extracting..."
 tar -xzf "$TMP_DIR/nas-agent-installer.tar.gz" -C "$TMP_DIR"
 
-exec bash "$TMP_DIR/nas-agent-final/install.sh" "$@"
+bash "$TMP_DIR/nas-agent-final/install.sh" "$@"
+
+if [ -f "$TMP_DIR/nas-agent-final/uninstall.sh" ] && [ -d "/opt/nas-agent" ]; then
+    cp "$TMP_DIR/nas-agent-final/uninstall.sh" /opt/nas-agent/uninstall.sh
+    chmod +x /opt/nas-agent/uninstall.sh
+fi
